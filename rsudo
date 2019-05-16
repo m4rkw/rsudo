@@ -33,11 +33,6 @@ function infer_ssh_username() {
   fi
 }
 
-function revert() {
-  sleep 1
-  ssh -tt $target "sudo -S sed -i 's/^/#/' /etc/sudoers.d/$user" 1>/dev/null 2>/dev/null
-}
-
 target="$1"
 infer_ssh_username
 
@@ -46,7 +41,4 @@ read -s key
 echo
 
 ssh -tt $target "echo $key | sudo -S sed -i 's/^#//' /etc/sudoers.d/$user" 1>/dev/null 2>/dev/null
-
-revert&
-
-ssh -tt $target sudo bash
+ssh -tt $target sudo "sed -i 's/^/#/' /etc/sudoers.d/$user && bash"
