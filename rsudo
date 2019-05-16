@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# rsudo by m4rkw
+#
+# executes sudo bash to get a root shell on a remote server in one command.
+# this is done by capturing the sudo password locally before the ssh connection
+# is made. it requires /etc/sudoers.d/<USER> to exist, with the following
+# content:
+
+#user ALL = NOPASSWD: ALL
+
+# rsudo will uncomment this line for one second in order to sudo bash on the
+# remote server without a password, then revert it.
+#
+# this idea came from routinely needing to execute commands on remote servers as
+# root while travelling on the London Underground where wifi only works for very
+# brief periods at the stations.
+
+if [ "$1" == "" ] ; then
+  echo "usage: rsudo <host>"
+  exit 0
+fi
+
+function infer_ssh_username() {
+  x=`echo "$target" |grep '@'`
+  if [ "$x" != "" ] ; then
+    user=`echo "$target" |cut -d '@' -f1`
+  else
+    user=`cat ~/.ssh/config |grep -A10 "Host $target$" |grep -B10 '^$' |grep ' User ' |xargs |cut -d ' ' -f2`
+    if [ "$user" == "" ] ; then
+      user=`whoami`
+    fi
+  fi
+}
+
+function revert() {
+  sleep 1
+  ssh -tt $target "sudo -S sed -i 's/^/#/' /etc/sudoers.d/$user" 1>/dev/null 2>/dev/null
+}
+
+target="$1"
+infer_ssh_username
+
+echo -n "password: "
+read -s key
+echo
+
+ssh -tt $target "echo $key | sudo -S sed -i 's/^#//' /etc/sudoers.d/$user" 1>/dev/null 2>/dev/null
+
+revert&
+
+ssh -tt $target sudo bash
