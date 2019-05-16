@@ -2,7 +2,7 @@
 
 executes sudo bash to get a root shell on a remote server in one command.
 this is done by capturing the sudo password locally before the ssh connection
-is made. it requires /etc/sudoers.d/<USER> to exist, with the following
+is made. it requires /etc/sudoers.d/USER to exist, with the following
 content:
 
 ````
